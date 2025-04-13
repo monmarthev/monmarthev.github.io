@@ -1,26 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Web Page</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Paiement Stripe</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <!-- Optionnel : ajouter un peu de style -->
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        button { padding: 10px 15px; font-size: 16px; cursor: pointer; }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to My Web Page</h1>
-    </header>
-    <main>
-        <section>
-            <h2>About Me</h2>
-            <p>This is a brief introduction about myself.</p>
-        </section>
-        <section>
-            <h2>My Projects</h2>
-            <p>Here are some of my projects.</p>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2023 My Web Page</p>
-    </footer>
+    <h1>Mon Produit</h1>
+    <p>Description du produit...</p>
+    <p><strong>Prix: 10.00 EUR</strong></p>
+    <button id="checkout-button">Payer avec Stripe</button>
+
+    <div id="error-message" style="color: red; margin-top: 10px;"></div>
+
+    <script>
+        // Remplacer par votre clé publique Stripe
+        const stripePublicKey = 'pk_test_51RDSojQTK3FebJtB544l6exGLFM2BAecs7ByWJIxwiMHtYPGEI8a24IUU3ih2jqyegJWUdfRVi4gRmTQMoQVzQQb00syO4IBRG'; 
+        const stripe = Stripe(stripePublicKey);
+        const checkoutButton = document.getElementById('checkout-button');
+        const errorMessageDiv = document.getElementById('error-message');
+
+        checkoutButton.addEventListener('click', async () => {
+            errorMessageDiv.textContent = ''; // Effacer les anciens messages d'erreur
+            checkoutButton.disabled = true; // Désactiver le bouton pendant le processus
+            checkoutButton.textContent = 'Traitement...';
+
+            try {
+                // 1. Appeler le backend pour créer la session Checkout
+                const response = await fetch('/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    // Optionnel: envoyer l'ID du prix si le serveur le gère dynamiquement
+                    // body: JSON.stringify({ priceId: 'VOTRE_PRICE_ID' })
+                });
+
+                if (!response.ok) {
+                    // Gérer les erreurs venant du serveur (ex: 500 Internal Server Error)
+                    const errorData = await response.json().catch(() => ({})); // Essayer de parser l'erreur JSON
+                    throw new Error(errorData.error?.message || `Erreur serveur: ${response.status}`);
+                }
+
+                const session = await response.json();
+
+                // 2. Rediriger vers la page de paiement Stripe
+                const { error } = await stripe.redirectToCheckout({ sessionId: session.id });
+
+                // Cette partie n'est atteinte que si redirectToCheckout échoue (ex: problème réseau immédiat)
+                if (error) {
+                    throw error; // Lancer l'erreur pour le bloc catch
+                }
+            } catch (error) {
+                console.error('Erreur lors du paiement:', error);
+                errorMessageDiv.textContent = `Erreur: ${error.message || 'Impossible de contacter le serveur de paiement.'}`;
+                checkoutButton.disabled = false; // Réactiver le bouton
+                checkoutButton.textContent = 'Payer avec Stripe';
+            }
+        });
+    </script>
+</body>
 </html>

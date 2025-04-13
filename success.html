@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Merci!</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>Merci pour votre achat!</h1>
+  <p>Votre paiement a été traité avec succès.</p>
+  <p>Vous recevrez bientôt une confirmation par email.</p>
+  <p><a href="/">Retour à la page d'accueil</a></p>
+
+  <script>
+    // Optionnel: Récupérer l'ID de session depuis l'URL pour affichage ou traitement
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    if (sessionId) {
+      console.log('ID de Session Stripe:', sessionId);
+      // Ici, vous pourriez faire un appel à votre backend pour vérifier 
+      // le statut de la session et mettre à jour l'état de la commande, par exemple.
+    }
+  </script>
+</body>
+</html> 
